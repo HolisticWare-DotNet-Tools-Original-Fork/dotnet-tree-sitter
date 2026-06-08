@@ -1,15 +1,18 @@
 #!/bin/sh
 #
-# Build all native tree-sitter libraries with CMake.
+# Build all native tree-sitter libraries with CMake + Zig cross-compiler.
 # Produces .so/.dylib/.dll files in native/out/{platform}/
 # to match the layout expected by the .NET bindings.
 #
 # Usage:
 #   ./native/build-all.sh osx-arm64        # macOS Apple Silicon (native)
 #   ./native/build-all.sh osx-x64          # macOS Intel (native)
-#   ./native/build-all.sh linux-x64        # Linux x86_64 (requires x86_64-linux-gnu-gcc on non-Linux hosts)
-#   ./native/build-all.sh linux-arm64      # Linux ARM64 (requires aarch64-linux-gnu-gcc on non-Linux hosts)
-#   ./native/build-all.sh win-x64          # Windows x86_64 (requires mingw-w64 on non-Windows hosts)
+#   ./native/build-all.sh linux-x64        # Linux x86_64
+#   ./native/build-all.sh linux-arm64      # Linux ARM64
+#   ./native/build-all.sh win-x64          # Windows x86_64
+#
+# macOS builds use the system compiler. Linux/Windows builds use zig cc
+# for cross-compilation (requires: brew install zig on macOS).
 
 set -e
 
@@ -26,23 +29,23 @@ fi
 OUTDIR="${SCRIPT_DIR}/out/${PLATFORM}"
 BUILDDIR="${SCRIPT_DIR}/build-cmake"
 
-# Map platform to CMake system name and toolchain file
+# Map platform to zig target triple and cmake system name
 case "$PLATFORM" in
     osx-arm64|osx-x64)
-        SYSTEM_NAME="Darwin"
-        TOOLCHAIN=""
+        ZIG_TARGET=""
+        CMAKE_SYSTEM_NAME=""
         ;;
     linux-x64)
-        SYSTEM_NAME="Linux"
-        TOOLCHAIN="${TOOLCHAIN_DIR}/toolchain-linux-x64.cmake"
+        ZIG_TARGET="x86_64-linux-gnu"
+        CMAKE_SYSTEM_NAME="Linux"
         ;;
     linux-arm64)
-        SYSTEM_NAME="Linux"
-        TOOLCHAIN="${TOOLCHAIN_DIR}/toolchain-linux-arm64.cmake"
+        ZIG_TARGET="aarch64-linux-gnu"
+        CMAKE_SYSTEM_NAME="Linux"
         ;;
     win-x64)
-        SYSTEM_NAME="Windows"
-        TOOLCHAIN="${TOOLCHAIN_DIR}/toolchain-win-x64.cmake"
+        ZIG_TARGET="x86_64-windows-gnu"
+        CMAKE_SYSTEM_NAME="Windows"
         ;;
     *)
         echo "Unknown platform: ${PLATFORM}"
@@ -51,41 +54,21 @@ case "$PLATFORM" in
         ;;
 esac
 
-# Detect host OS
-HOST_OS="$(uname -s)"
-case "$SYSTEM_NAME" in
-    Darwin)   HOST_MATCH="Darwin" ;;
-    Linux)    HOST_MATCH="Linux" ;;
-    Windows)  HOST_MATCH="Windows" ;;
-    *)        HOST_MATCH="" ;;
-esac
-
-# Check if we're cross-compiling (target differs from host)
-CROSS_COMPILE=0
-if [ "$HOST_OS" != "$SYSTEM_NAME" ]; then
-    CROSS_COMPILE=1
-fi
-
-# If cross-compiling, verify toolchain file exists and compiler is available
-if [ $CROSS_COMPILE -eq 1 ] && [ -n "$TOOLCHAIN" ]; then
-    if [ ! -f "$TOOLCHAIN" ]; then
-        echo "ERROR: Cross-compile toolchain not found: ${TOOLCHAIN}"
-        echo "Install cross-compilers:"
-        echo "  Linux x64:  apt install gcc-x86-64-linux-gnu (Debian/Ubuntu) or yum install gcc-x86_64-linux-gnu (RHEL)"
-        echo "  Linux ARM64: apt install gcc-aarch64-linux-gnu (Debian/Ubuntu) or yum install gcc-aarch64-linux-gnu (RHEL)"
-        echo "  Windows:    brew install mingw-w64 (macOS)"
+# For cross-compilation targets, verify zig is available
+if [ -n "$ZIG_TARGET" ]; then
+    if ! command -v zig &>/dev/null; then
+        echo "ERROR: zig not found. Install with:"
+        echo "  brew install zig (macOS)"
         exit 1
     fi
     
-    # Extract compiler from toolchain and check availability
-    COMPILER=$(grep "CMAKE_C_COMPILER" "$TOOLCHAIN" | sed 's/^set(CMAKE_C_COMPILER //;s/)$//')
-    if ! command -v "$COMPILER" &>/dev/null; then
-        echo "ERROR: Cross-compiler not found: ${COMPILER}"
-        echo "Install it first, or run this build script natively on the target platform."
+    # Verify zig can compile for this target
+    echo 'int foo(void) { return 0; }' | zig cc -target "$ZIG_TARGET" -x c -c - -o /dev/null 2>/dev/null || {
+        echo "ERROR: zig cannot compile for target: ${ZIG_TARGET}"
         exit 1
-    fi
+    }
     
-    echo "Cross-compiling $PLATFORM (host: $HOST_OS) using $COMPILER"
+    echo "Cross-compiling $PLATFORM using zig cc -target $ZIG_TARGET"
 fi
 
 echo "Building for ${PLATFORM} -> ${OUTDIR}"
@@ -98,8 +81,13 @@ CMAKE_ARGS=(
     -DCMAKE_BUILD_TYPE=Release
 )
 
-if [ -n "$TOOLCHAIN" ]; then
-    CMAKE_ARGS+=(-DCMAKE_TOOLCHAIN_FILE="${TOOLCHAIN}")
+# Cross-compilation: use zig toolchain file
+if [ -n "$ZIG_TARGET" ]; then
+    CMAKE_ARGS+=(
+        -DCMAKE_TOOLCHAIN_FILE="${TOOLCHAIN_DIR}/toolchain-zig.cmake"
+        -DZIG_TARGET=${ZIG_TARGET}
+        -DZIG_CMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
+    )
 fi
 
 cmake "${CMAKE_ARGS[@]}"
