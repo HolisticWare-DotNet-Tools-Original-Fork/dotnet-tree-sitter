@@ -77,9 +77,17 @@ foreach(t ${ALL_TARGETS})
 endforeach()
 
 # -------------------------------------------------------
-# Cross-platform library naming (prefix "lib" on Unix, no prefix on Windows)
+# Cross-platform library naming (prefix "lib" on Unix targets, no prefix on Windows)
+# Uses CMAKE_SYSTEM_NAME (the target OS) rather than UNIX (the host OS)
+# so cross-compilation from macOS to Windows produces .dll without "lib" prefix.
 # -------------------------------------------------------
-if(UNIX)
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    foreach(t ${ALL_TARGETS})
+        if(TARGET ${t})
+            set_target_properties(${t} PROPERTIES PREFIX "")
+        endif()
+    endforeach()
+else()
     foreach(t ${ALL_TARGETS})
         if(TARGET ${t})
             set_target_properties(${t} PROPERTIES PREFIX "lib")
