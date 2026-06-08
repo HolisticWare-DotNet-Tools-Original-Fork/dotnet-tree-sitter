@@ -28,6 +28,9 @@ native/update-submodules.sh       # update all grammar submodules
 native/build-all.sh osx-arm64     # builds all grammars, outputs to native/out/osx-arm64/
 ```
 Requires `tree-sitter` CLI (`npm install -g tree-sitter-cli`) for grammar parser generation.
+
+CMake produces the correct output format per platform: `.dylib` on macOS, `.so` on Linux, `.dll` on Windows. Must be run natively on each target platform. Cross-compile toolchains in `native/cmake/` (requires installing cross-compilers manually).
+
 CMakeLists.txt files ship with upstream submodules; local patches applied for this repo:
 - `ts-test` targets wrapped in `if(ENABLE_TS_TEST)` to avoid name collisions across grammars
 - PHP/TypeScript parent CMakeLists.txts use `${GRAMMAR_BINDINGS_C}` variable for pc.in paths
