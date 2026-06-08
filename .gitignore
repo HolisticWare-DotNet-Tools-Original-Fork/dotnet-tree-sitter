@@ -129,3 +129,139 @@ zig-out/
 *.tar.gz
 *.tgz
 *.zip
+
+### Maven ###
+target/
+
+### JetBrains ###
+.idea/*
+out/
+*.iws
+*.iml
+*.ipr
+*.trace
+*.log
+.attach_*
+
+# Eclipse
+.settings/
+.classpath
+.project
+
+### Vim ###
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+Session.vim
+.nvimrc
+tags
+*~
+
+
+# Rust artifacts
+target/
+
+# Node artifacts
+build/
+prebuilds/
+node_modules/
+
+# Swift artifacts
+.build/
+
+# Go artifacts
+_obj/
+
+# Python artifacts
+.venv/
+dist/
+*.egg-info
+*.whl
+
+# C artifacts
+*.a
+*.so
+*.so.*
+*.dylib
+*.dll
+*.pc
+*.exp
+*.lib
+
+# Zig artifacts
+.zig-cache/
+zig-cache/
+zig-out/
+
+# Example dirs
+/examples/*/
+
+# Grammar volatiles
+*.wasm
+*.obj
+*.o
+
+# Archives
+*.tar.gz
+*.tgz
+*.zip
+
+# General
+.DS_Store
+.localized
+__MACOSX/
+.AppleDouble
+.LSOverride
+Icon[]
+
+# Resource forks
+._*
+
+# Files and directories that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.com.apple.timemachine.supported
+.PKInstallSandboxManager
+.PKInstallSandboxManager-SystemSoftware
+.hotfiles.btree
+.vol
+.file
+.disk_label*
+lost+found
+.HFS+ Private Directory Data[]
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Mac OS 6 to 9
+Desktop DB
+Desktop DF
+TheFindByContentFolder
+TheVolumeSettingsFolder
+.FBCIndex
+.FBCSemaphoreFile
+.FBCLockFolder
+
+# Quota system
+.quota.group
+.quota.user
+.quota.ops.group
+.quota.ops.user
+
+# TimeMachine
+Backups.backupdb
+.MobileBackups
+.MobileBackups.trash
+MobileBackups.trash
+tmbootpicker.efi
