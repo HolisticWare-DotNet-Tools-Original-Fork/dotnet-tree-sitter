@@ -13,6 +13,7 @@ tree-sitter/tree-sitter-cpp/
 tree-sitter/tree-sitter-go/
 tree-sitter/tree-sitter-java/
 tree-sitter/tree-sitter-javascript/
+tree-sitter/tree-sitter-markdown/
 tree-sitter/tree-sitter-php/
 tree-sitter/tree-sitter-python/
 tree-sitter/tree-sitter-ruby/
