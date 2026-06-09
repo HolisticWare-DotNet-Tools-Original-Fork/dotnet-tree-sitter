@@ -16,6 +16,6 @@ tree native/out/
 
 file ./native/out/linux-arm64/libtree-sitter.so
 file ./native/out/linux-x64/libtree-sitter.so
-file ./native/out/win-x64/libtree-sitter.so
-file ./native/out/osx-arm64/libtree-sitter.so
-file ./native/out/osx-x64/libtree-sitter.so
+file ./native/out/osx-arm64/libtree-sitter.dylib
+file ./native/out/osx-x64/libtree-sitter.dylib
+file ./native/out/win-x64/libtree-sitter.dll
