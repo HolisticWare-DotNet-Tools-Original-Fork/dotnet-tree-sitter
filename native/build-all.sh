@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 #
 # Build all native tree-sitter libraries with CMake + Zig cross-compiler.
 # Produces .so/.dylib/.dll files in native/out/{platform}/
@@ -16,7 +16,7 @@
 
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TOOLCHAIN_DIR="${SCRIPT_DIR}/cmake"
 PLATFORM="${1:-}"
 
@@ -27,7 +27,7 @@ if [ -z "$PLATFORM" ]; then
 fi
 
 OUTDIR="${SCRIPT_DIR}/out/${PLATFORM}"
-BUILDDIR="${SCRIPT_DIR}/build-cmake"
+BUILDDIR="${SCRIPT_DIR}/build-cmake-${PLATFORM}"
 
 # Map platform to zig target triple and cmake system name
 case "$PLATFORM" in
@@ -81,16 +81,21 @@ CMAKE_ARGS=(
     -DCMAKE_BUILD_TYPE=Release
 )
 
-# Cross-compilation: use zig toolchain file
+# Cross-compilation: use CC env var with zig cc target triple.
+# For Windows, also set CMAKE_AR to zig ar which handles COFF response files
+# (macOS native ar fails when cross-compiling to Windows).
 if [ -n "$ZIG_TARGET" ]; then
     CMAKE_ARGS+=(
-        -DCMAKE_TOOLCHAIN_FILE="${TOOLCHAIN_DIR}/toolchain-zig.cmake"
-        -DZIG_TARGET=${ZIG_TARGET}
-        -DZIG_CMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
+        -DCMAKE_SYSTEM_NAME="${CMAKE_SYSTEM_NAME}"
     )
+    if [ "${CMAKE_SYSTEM_NAME}" = "Windows" ]; then
+        CC="zig cc -target ${ZIG_TARGET}" cmake -DCMAKE_AR="${SCRIPT_DIR}/cmake/zig-ar" "${CMAKE_ARGS[@]}"
+    else
+        CC="zig cc -target ${ZIG_TARGET}" cmake "${CMAKE_ARGS[@]}"
+    fi
+else
+    cmake "${CMAKE_ARGS[@]}"
 fi
-
-cmake "${CMAKE_ARGS[@]}"
 
 # Build
 cmake --build "${BUILDDIR}" --config Release --target build-all
