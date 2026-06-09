@@ -13,23 +13,23 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <None Include="../../../native/out/linux-x64/libtree-sitter.so" Pack="true" PackagePath="runtimes/linux-x64/native/" >
+        <None Include="../../../native/out/linux-x64/libtree-sitter.so" Pack="true" PackagePath="runtimes/linux-x64/native/" Condition="Exists('../../../native/out/linux-x64/libtree-sitter.so')">
             <TargetPath>%(Filename)%(Extension)</TargetPath>
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Include="../../../native/out/linux-arm64/libtree-sitter.so" Pack="true" PackagePath="runtimes/linux-arm64/native/" >
+        <None Include="../../../native/out/linux-arm64/libtree-sitter.so" Pack="true" PackagePath="runtimes/linux-arm64/native/" Condition="Exists('../../../native/out/linux-arm64/libtree-sitter.so')">
             <TargetPath>%(Filename)%(Extension)</TargetPath>
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Include="../../../native/out/osx-arm64/libtree-sitter.dylib" Pack="true" PackagePath="runtimes/osx-arm64/native/" >
+        <None Include="../../../native/out/osx-arm64/libtree-sitter.dylib" Pack="true" PackagePath="runtimes/osx-arm64/native/" Condition="Exists('../../../native/out/osx-arm64/libtree-sitter.dylib')">
             <TargetPath>%(Filename)%(Extension)</TargetPath>
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Include="../../../native/out/osx-x64/libtree-sitter.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/" >
+        <None Include="../../../native/out/osx-x64/libtree-sitter.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/" Condition="Exists('../../../native/out/osx-x64/libtree-sitter.dylib')">
             <TargetPath>%(Filename)%(Extension)</TargetPath>
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Include="../../../native/out/win-x64/tree-sitter.dll" Pack="true" PackagePath="runtimes/win-x64/native/" >
+        <None Include="../../../native/out/win-x64/tree-sitter.dll" Pack="true" PackagePath="runtimes/win-x64/native/" Condition="Exists('../../../native/out/win-x64/tree-sitter.dll')">
             <TargetPath>%(Filename)%(Extension)</TargetPath>
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
