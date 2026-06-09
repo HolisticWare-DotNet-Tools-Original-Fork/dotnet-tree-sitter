@@ -34,6 +34,7 @@ if(TARGET tree-sitter)
     set_target_properties(tree-sitter PROPERTIES
         OUTPUT_NAME "tree-sitter"
         LIBRARY_OUTPUT_DIRECTORY "${TREE_SITTER_OUTPUT_DIR}"
+        RUNTIME_OUTPUT_DIRECTORY "${TREE_SITTER_OUTPUT_DIR}"
         ARCHIVE_OUTPUT_DIRECTORY "${TREE_SITTER_OUTPUT_DIR}"
     )
 endif()
@@ -70,6 +71,7 @@ foreach(t ${ALL_TARGETS})
         if(lib_type STREQUAL "SHARED_LIBRARY")
             set_target_properties(${t} PROPERTIES
                 LIBRARY_OUTPUT_DIRECTORY "${TREE_SITTER_OUTPUT_DIR}"
+                RUNTIME_OUTPUT_DIRECTORY "${TREE_SITTER_OUTPUT_DIR}"
                 ARCHIVE_OUTPUT_DIRECTORY "${TREE_SITTER_OUTPUT_DIR}"
             )
         endif()
