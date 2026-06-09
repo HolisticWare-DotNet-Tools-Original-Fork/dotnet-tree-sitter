@@ -14,8 +14,22 @@ cd -
 
 tree native/out/
 
+echo \
+"file ./native/out/linux-arm64/libtree-sitter.so"
 file ./native/out/linux-arm64/libtree-sitter.so
+
+echo \
+"file ./native/out/linux-x64/libtree-sitter.so"
 file ./native/out/linux-x64/libtree-sitter.so
+
+echo \
+"file ./native/out/osx-arm64/libtree-sitter.dylib"
 file ./native/out/osx-arm64/libtree-sitter.dylib
+
+echo \
+"file ./native/out/osx-x64/libtree-sitter.dylib"
 file ./native/out/osx-x64/libtree-sitter.dylib
-file ./native/out/win-x64/libtree-sitter.dll
+
+echo \
+"file ./native/out/win-x64/tree-sitter.dll"
+file ./native/out/win-x64/tree-sitter.dll
