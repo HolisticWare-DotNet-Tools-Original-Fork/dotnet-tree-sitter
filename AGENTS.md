@@ -1,62 +1,52 @@
 # AGENTS.md
 
-## Repo structure
-- **Root**: `dotnet/` — C# bindings; `native/` — tree-sitter C library + grammar submodules
-- **Core library**: `dotnet/TreeSitter/` — single-project SDK-style csproj targeting `net8.0`
-- **Grammar bindings**: Built from `dotnet/.GrammarTemplate/` via `make-grammars.sh`; produce `TreeSitter{GrammarName}/` packages
-- **Native libs**: Prebuilt `.so`/`.dylib`/`.dll` live in `native/out/{platform}/`; referenced by csproj via `runtimes/{rid}/native/` pack paths. These do not exist in a fresh clone — run the build scripts first
+## After cloning
+```sh
+git submodule update --init --recursive
+```
+Native libs do not exist in a fresh clone — build them before building .NET packages.
+
+## Build order (must be this order)
+1. **Native libraries** — run platform-specific script natively on target platform:
+   ```sh
+   native/make-macos.sh osx-arm64       # macOS
+   native/make-linux.sh linux-x64       # Linux x64
+   native/make-windows.bat win-x64      # Windows (needs VS 2022)
+   ```
+   Outputs to `native/out/{platform}/`. Alternative: `native/build-all.sh` (cmake, requires `tree-sitter-cli` npm package).
+
+2. **Core .NET binding**:
+   ```sh
+   cd dotnet && ./make-tree-sitter-core.sh <build_number>
+   ```
+
+3. **Grammar bindings** (auto-discovers all `native/tree-sitter-*/` dirs):
+   ```sh
+   ./make-grammars.sh <build_number>
+   ```
+
+All `.nupkg` files go to `dotnet/out/`.
+
+## Architecture
+- `dotnet/TreeSitter/` — core library (SDK-style csproj, targets **`net10.0`**)
+- `dotnet/.GrammarTemplate/` — template for grammar bindings; produces `TreeSitter{GrammarName}/` packages targeting **`net8.0`** (references core project)
+- All bindings share the `TreeSitter` namespace
+- DllImport uses bare library basenames (`"tree-sitter"`, `"tree-sitter-python"`), not full paths — OS loader resolves via runtimes pack or system path
+
+## Solution file
+`dotnet-tree-sitter.sln` only includes the core `TreeSitter` project. Grammar bindings are built standalone by `make-grammars.sh`.
 
 ## Submodules
-All native code comes from git submodules under `native/`:
-- `tree-sitter` core (https://github.com/tree-sitter/tree-sitter.git)
-- Grammars: python, javascript, cpp, c-sharp, java, php, go, ruby, typescript, bsl
+Located in `native/`: tree-sitter core + 10 grammar repos (python, javascript, cpp, c-sharp, java, php, go, ruby, typescript, bsl). The bsl submodule uses SSH URL (`git@github.com:zabbius/tree-sitter-bsl.git`).
 
-After cloning: `git submodule update --init --recursive`
+## Gotchas
+- **No tests** — thin P/Invoke wrappers around tree-sitter C API
+- `LangVersion` is `default` (not pinned)
+- Grammar template placeholders: `{GrammarName}` (PascalCase), `{grammar_name}` (snake_case), `{grammar-name}` (kebab-case)
+- Native libs have `CopyToOutputDirectory=Always` — must exist at runtime
+- `download-tree-sitter-grammars.sh` is a deprecated alternative to submodules (downloads into `externals/`)
+- CI: `.github/workflows/tree-sitter.yml` — five native jobs, then one dotnet job that downloads all artifacts and publishes prerelease nupkgs
 
-## Build commands
-
-### Native libraries (make — default)
-```sh
-native/make-macos.sh osx-arm64    # build on macOS (outputs to native/out/osx-arm64/)
-native/make-linux.sh linux-x64    # build on Linux x64
-native/make-windows.bat win-x64   # build on Windows x64 (requires Visual Studio 2022)
-native/update-submodules.sh       # update all grammar submodules
-```
-
-### Native libraries (cmake — alternative)
-```sh
-native/build-all.sh osx-arm64     # builds all grammars, outputs to native/out/osx-arm64/
-```
-Requires `tree-sitter` CLI (`npm install -g tree-sitter-cli`) for grammar parser generation.
-
-CMake produces the correct output format per platform: `.dylib` on macOS, `.so` on Linux, `.dll` on Windows. Must be run natively on each target platform. Cross-compile toolchains in `native/cmake/` (requires installing cross-compilers manually).
-
-CMakeLists.txt files ship with upstream submodules; local patches applied for this repo:
-- `ts-test` targets wrapped in `if(ENABLE_TS_TEST)` to avoid name collisions across grammars
-- PHP/TypeScript parent CMakeLists.txts use `${GRAMMAR_BINDINGS_C}` variable for pc.in paths
-- `tree-sitter-bsl` skipped when submodule not initialized (requires SSH access)
-
-### .NET packages
-```sh
-cd dotnet
-./make-tree-sitter-core.sh <build_number>   # builds TreeSitter package
-./make-grammars.sh <build_number>           # generates and builds all grammar packages into out/
-```
-
-Both scripts output `.nupkg` files to `dotnet/out/`. CI passes build number via `${{ github.run_number }}`.
-
-## Adding a new grammar binding
-1. Add the tree-sitter grammar submodule under `native/tree-sitter-{name}/`
-2. Update `native/update-submodules.sh` if needed
-3. Run `make-grammars.sh` — it auto-discovers `native/tree-sitter-*/` dirs and generates bindings from `.GrammarTemplate/`
-4. Template placeholders: `{GrammarName}` (PascalCase), `{grammar_name}` (snake_case), `{grammar-name}` (kebab-case)
-
-## CI
-`.github/workflows/tree-sitter.yml` — five native build jobs (linux-x64, linux-arm64, macos-arm64, macos-intel, windows-x64) then a single dotnet build job that downloads all artifacts and publishes prerelease nupkgs.
-
-## Important details
-- **No tests** in this repo — the bindings are thin P/Invoke wrappers around tree-sitter C API
-- `LangVersion` is `default` (not pinned); target framework is `net8.0`
-- Native `.so`/`.dylib`/`.dll` files are set to `CopyToOutputDirectory=Always` — they must exist at runtime in the same directory or be unpacked from the nuget package
-- DllImport names use bare library basenames (e.g. `"tree-sitter"`, `"tree-sitter-python"`), not full paths — the OS loader finds them via runtimes pack or system library path
-- Grammar binding csprojs reference the core `TreeSitter` project; all bindings share the `TreeSitter` namespace
+## Adding a new grammar
+1. Add submodule under `native/tree-sitter-{name}/`
+2. Run `make-grammars.sh` — auto-discovers it via `.GrammarTemplate/`
